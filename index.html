@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>清能探藏，水环共兴 - 清华大学赴西藏实践交互式总结</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Warm Earth Tones -->
+    <!-- Application Structure Plan: The SPA is designed as an interactive journey map. The main screen features a stylized map of the practice route with key locations as clickable nodes. This non-linear structure allows users to freely explore specific events based on interest, rather than following the rigid chronology of the report. Clicking a node smoothly scrolls to a dedicated content card for that location, which combines a narrative summary, highlighted key data/quotes, and an interactive chart. This design transforms passive reading into an active exploration, making the dense information more digestible and engaging. A persistent top navigation bar provides an alternative way to jump between sections, ensuring usability. -->
+    <!-- Visualization & Content Choices: 
+        - Team Composition: Report Info -> Team makeup (majors, party members). Goal -> Inform. Viz -> Donut Chart (Chart.js). Interaction -> Hover for details. Justification -> Visually represents the interdisciplinary nature of the team quickly.
+        - Linzhi's Energy Potential: Report Info -> Data from Linzhi Energy Bureau meeting. Goal -> Compare. Viz -> Bar Chart (Chart.js). Interaction -> Hover for exact values. Justification -> Clearly shows the scale of different energy resources.
+        - Gala Village's Success: Report Info -> Household dividend and tourism income. Goal -> Inform/Impact. Viz -> Dynamic Stat Cards (HTML/CSS). Interaction -> Subtle animation on view. Justification -> Emphasizes the impressive economic outcomes of rural revitalization.
+        - Journey Map/Navigator: Report Info -> The entire 10-day itinerary. Goal -> Organize/Navigate. Viz -> Interactive Diagram (HTML/CSS/JS). Interaction -> Click to scroll and highlight. Justification -> Provides an intuitive, visual table of contents for the entire practice.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            background-color: #FDFBF8;
+            color: #3a3a3a;
+        }
+        .nav-item {
+            transition: all 0.3s ease;
+        }
+        .nav-item.active, .nav-item:hover {
+            color: #c86a2d;
+            border-bottom-color: #c86a2d;
+        }
+        .map-node {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .map-node:hover {
+            transform: scale(1.1);
+            background-color: #e6a23c;
+        }
+        .map-line {
+            height: 2px;
+            background-color: #d3cec4;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+            max-height: 350px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 350px;
+            }
+        }
+        .content-card {
+            border: 1px solid #e5e0d4;
+            background-color: #ffffff;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+        }
+        .content-card.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <header class="bg-white/80 backdrop-blur-md sticky top-0 z-50 shadow-sm">
+        <nav class="container mx-auto px-6 py-3">
+            <div class="flex items-center justify-between">
+                <div class="text-xl font-bold text-[#3a3a3a]">清能探藏 水环共兴</div>
+                <div class="hidden md:flex items-center space-x-6 text-sm">
+                    <a href="#intro" class="nav-item border-b-2 border-transparent pb-1">实践总览</a>
+                    <a href="#journey" class="nav-item border-b-2 border-transparent pb-1">实践地图</a>
+                    <a href="#team" class="nav-item border-b-2 border-transparent pb-1">团队构成</a>
+                    <a href="#conclusion" class="nav-item border-b-2 border-transparent pb-1">感悟总结</a>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main class="container mx-auto px-6 py-12">
+        <section id="intro" class="text-center mb-16">
+            <h1 class="text-4xl md:text-5xl font-bold text-[#c86a2d] mb-4">把论文写在雪域高原</h1>
+            <h2 class="text-2xl md:text-3xl font-light text-gray-600 mb-8">将青春融入祖国山河</h2>
+            <p class="max-w-3xl mx-auto text-gray-700 leading-relaxed">
+                2025年7月，一支由清华大学能动、水利、环境等多院系14名博硕士组成的“清能探藏，水环共兴”暑期实践支队，奔赴西藏。他们深入能源工程一线、乡村振兴现场和政府决策部门，用十天时间，丈量雪域高原的能源版图，回应“到祖国最需要的地方去”的时代号召。本应用将带您交互式地回顾这段意义非凡的旅程。
+            </p>
+        </section>
+
+        <section id="journey" class="mb-16">
+            <h3 class="text-3xl font-bold text-center mb-4">实践地图</h3>
+            <p class="text-center text-gray-600 mb-12">点击下方地图中的站点，探索支队在各地的足迹与收获。</p>
+            <div class="w-full overflow-x-auto pb-4">
+                <div class="flex items-center justify-between min-w-[800px] md:min-w-0 px-4">
+                    <div class="flex flex-col items-center text-center w-28">
+                        <div class="map-node bg-[#d3cec4] rounded-full w-8 h-8 flex items-center justify-center mb-2" data-target="linzhi">
+                            <span class="text-white font-bold">1</span>
+                        </div>
+                        <p class="text-sm font-semibold">林芝</p>
+                        <p class="text-xs text-gray-500">青年对话</p>
+                    </div>
+                    <div class="flex-1 map-line"></div>
+                    <div class="flex flex-col items-center text-center w-28">
+                        <div class="map-node bg-[#d3cec4] rounded-full w-8 h-8 flex items-center justify-center mb-2" data-target="gov">
+                            <span class="text-white font-bold">2</span>
+                        </div>
+                        <p class="text-sm font-semibold">政企学研</p>
+                        <p class="text-xs text-gray-500">高原论剑</p>
+                    </div>
+                    <div class="flex-1 map-line"></div>
+                    <div class="flex flex-col items-center text-center w-28">
+                        <div class="map-node bg-[#d3cec4] rounded-full w-8 h-8 flex items-center justify-center mb-2" data-target="power">
+                            <span class="text-white font-bold">3</span>
+                        </div>
+                        <p class="text-sm font-semibold">能源动脉</p>
+                        <p class="text-xs text-gray-500">探寻心跳</p>
+                    </div>
+                    <div class="flex-1 map-line"></div>
+                    <div class="flex flex-col items-center text-center w-28">
+                        <div class="map-node bg-[#d3cec4] rounded-full w-8 h-8 flex items-center justify-center mb-2" data-target="lhasa">
+                            <span class="text-white font-bold">4</span>
+                        </div>
+                        <p class="text-sm font-semibold">拉萨</p>
+                        <p class="text-xs text-gray-500">收官与展望</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <div id="content-sections" class="space-y-12">
+            <section id="linzhi" class="content-card rounded-xl shadow-lg p-6 md:p-8">
+                <h4 class="text-2xl font-bold text-[#c86a2d] mb-4">第一站：林芝 | 青春对话，播撒希望</h4>
+                <p class="text-gray-600 mb-6">在林芝，支队走进了八一中学和嘎拉村，与当地青年学生和村民进行了深入交流。这不仅是一次知识的传递，更是一场关于梦想和未来的双向奔赴。</p>
+                <div class="grid md:grid-cols-2 gap-8">
+                    <div>
+                        <h5 class="font-semibold mb-2">八一中学：点燃科技火种</h5>
+                        <p class="text-sm text-gray-700 mb-4">支队成员将“双碳”战略拆解为生动的科普实验和身边提问，将“考清华、回西藏、建家乡”的种子，播撒在200余名藏族中学生的心中。</p>
+                        <h5 class="font-semibold mb-2">嘎拉村：见证乡村蝶变</h5>
+                        <p class="text-sm text-gray-700">沿着总书记的足迹，支队在“雪域桃花源”嘎拉村见证了乡村振兴的丰硕成果。村民的感慨，为青年科研工作者指明了奋斗的方向。</p>
+                        <blockquote class="mt-4 border-l-4 border-[#e6a23c] pl-4 py-2 bg-amber-50">
+                            <p class="text-gray-800 italic">"我们以前是马背上的民族，现在是高铁上的民族，希望娃娃们以后成为数据上的民族。"</p>
+                            <cite class="text-sm text-gray-500 mt-1 block">- 嘎拉村老人</cite>
+                        </blockquote>
+                    </div>
+                    <div class="flex flex-col justify-center items-center bg-gray-50 rounded-lg p-4">
+                         <h5 class="font-semibold mb-2 text-center">嘎拉村2024年经济成果</h5>
+                         <div class="text-center my-4">
+                            <p class="text-4xl font-bold text-[#c86a2d]">10.6 <span class="text-lg font-normal">万元</span></p>
+                            <p class="text-gray-600">户均分红</p>
+                         </div>
+                         <div class="text-center my-4">
+                            <p class="text-4xl font-bold text-[#c86a2d]">3.8 <span class="text-lg font-normal">亿元</span></p>
+                            <p class="text-gray-600">“桃花节”带动旅游收入</p>
+                         </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="gov" class="content-card rounded-xl shadow-lg p-6 md:p-8">
+                <h4 class="text-2xl font-bold text-[#c86a2d] mb-4">第二站：政企学研 | 高原论剑，共绘蓝图</h4>
+                <p class="text-gray-600 mb-6">支队与林芝市政府部门、西藏农牧大学、华能雅江公司及自治区能源局等单位进行了深度座谈，实现了一场跨越象牙塔与现实需求的思想碰撞，将科研课题与地方发展紧密相连。</p>
+                <div class="grid md:grid-cols-2 gap-8 items-center">
+                    <div>
+                        <h5 class="font-semibold mb-2">需求对接：从“招聘会”到“揭榜挂帅”</h5>
+                        <p class="text-sm text-gray-700 mb-4">林芝市政府亮出能源“家底”与引才政策，谭磊老师当场拍板推动就业实践基地落地。自治区能源局提出三大考题，双方迅速将“定日地震后电力应急”列为首个联合攻关项目。</p>
+                        <blockquote class="mt-4 border-l-4 border-[#e6a23c] pl-4 py-2 bg-amber-50">
+                            <p class="text-gray-800 italic">"缺的不是技术，是愿意留下来的人。"</p>
+                            <cite class="text-sm text-gray-500 mt-1 block">- 华能雅江公司</cite>
+                        </blockquote>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="energyPotentialChart"></canvas>
+                    </div>
+                </div>
+            </section>
+
+            <section id="power" class="content-card rounded-xl shadow-lg p-6 md:p-8">
+                <h4 class="text-2xl font-bold text-[#c86a2d] mb-4">第三站：能源动脉 | 丈量山河，探寻心跳</h4>
+                <p class="text-gray-600 mb-6">理论最终要走向实践。支队沿雅鲁藏布江溯源而上，足迹遍布藏木、加查、加娃、羊八井、旁多、扎拉等一系列世界级能源工程，亲身感受“大国重器”的澎湃脉搏。</p>
+                <div class="grid md:grid-cols-3 gap-6 text-center">
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <h5 class="font-semibold">藏木·加查</h5>
+                        <p class="text-sm text-gray-600 mt-2">见证智能调度与人工鱼道，感受工程智慧与生态关怀的融合。</p>
+                    </div>
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <h5 class="font-semibold">加娃光储·羊八井地热</h5>
+                        <p class="text-sm text-gray-600 mt-2">在海拔4500米体验“阳光充电宝”，在地球“体温”中嗅到新能源的春天。</p>
+                    </div>
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <h5 class="font-semibold">旁多·扎拉</h5>
+                        <p class="text-sm text-gray-600 mt-2">触摸守护百万人的“钢铁心脏”，见证全球最高水头机组的诞生。</p>
+                    </div>
+                </div>
+                 <blockquote class="mt-8 border-l-4 border-[#e6a23c] pl-4 py-2 bg-amber-50 max-w-2xl mx-auto">
+                    <p class="text-gray-800 italic text-center">"白天我们收集阳光，晚上我们点亮拉萨的布达拉宫。"</p>
+                    <cite class="text-sm text-gray-500 mt-1 block text-center">- 加娃光储电站负责人</cite>
+                </blockquote>
+            </section>
+
+            <section id="lhasa" class="content-card rounded-xl shadow-lg p-6 md:p-8">
+                <h4 class="text-2xl font-bold text-[#c86a2d] mb-4">第四站：拉萨 | 此身许国，坐标锁定</h4>
+                <p class="text-gray-600 mb-6">实践的终点，亦是新征程的起点。在拉萨，支队参观了大唐集控中心，并在烈士陵园和百万农奴解放纪念馆接受了精神的洗礼，完成了本次实践最深刻的升华。</p>
+                <div class="text-center bg-white p-6 rounded-lg">
+                    <p class="text-lg text-gray-800 leading-loose">在留言簿上，队员们不约而同地写下同一句话：</p>
+                    <p class="text-2xl font-bold text-[#c86a2d] my-4">“把论文写在雪域高原，把青春融进祖国的江河山川。”</p>
+                    <p class="text-gray-600">十天的实践画上了滚烫的句号，但对于这群清华学子而言，他们已将自己下一个十年的职业坐标，悄悄锁定在了这片壮美的世界屋脊。</p>
+                </div>
+            </section>
+        </div>
+
+        <section id="team" class="mt-16">
+            <h3 class="text-3xl font-bold text-center mb-10">我们的团队：一支“多兵种”劲旅</h3>
+            <div class="grid md:grid-cols-2 gap-8 items-center">
+                <div class="text-gray-700 space-y-4">
+                    <p>本次实践支队由14名来自能动、水利、环境、化工、法学院的博硕士研究生组成，堪称一支“多兵种”团队。</p>
+                    <ul class="list-disc list-inside space-y-2">
+                        <li>平均年龄 <span class="font-bold text-[#c86a2d]">25</span> 岁</li>
+                        <li>党员 <span class="font-bold text-[#c86a2d]">10</span> 人</li>
+                        <li>入党积极分子 <span class="font-bold text-[#c86a2d]">4</span> 人</li>
+                    </ul>
+                    <p>不同的学科背景带来了多元的研究视角，共同的家国情怀则凝聚成了强大的团队力量，让个人科研课题与西藏的水风光资源完成了精准匹配。</p>
+                </div>
+                <div class="chart-container">
+                    <canvas id="teamCompositionChart"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <section id="conclusion" class="text-center mt-20 py-10 border-t border-gray-200">
+            <h3 class="text-3xl font-bold mb-4">清能探藏，水环共兴</h3>
+            <p class="text-gray-600 max-w-2xl mx-auto">
+                这不仅是一次暑期实践，更是一次深刻的国情教育和精神淬炼。队员们带着课题而来，载着使命而归。雪域高原的壮丽山河与火热的建设场景，将激励着他们为祖国的能源、水利和环保事业贡献自己的青春力量。
+            </p>
+        </section>
+    </main>
+
+    <footer class="bg-gray-800 text-white mt-12">
+        <div class="container mx-auto px-6 py-4 text-center text-sm">
+            <p>&copy; 2025 清华大学“清能探藏，水环共兴”暑期实践支队</p>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const teamCompositionCtx = document.getElementById('teamCompositionChart').getContext('2d');
+            new Chart(teamCompositionCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['能动系', '水利系', '环境系', '化工系', '法学院'],
+                    datasets: [{
+                        label: '队员专业分布',
+                        data: [5, 3, 3, 2, 1],
+                        backgroundColor: ['#e6a23c', '#67a9cf', '#8ac284', '#d6604d', '#9e76b2'],
+                        borderColor: '#FDFBF8',
+                        borderWidth: 3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                        },
+                        title: {
+                            display: true,
+                            text: '队员专业构成'
+                        }
+                    }
+                }
+            });
+
+            const energyPotentialCtx = document.getElementById('energyPotentialChart').getContext('2d');
+            new Chart(energyPotentialCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['水能可开发量(万千瓦)', '光伏年等效利用小时'],
+                    datasets: [{
+                        label: '林芝能源潜力',
+                        data: [8200, 1800],
+                        backgroundColor: ['#67a9cf', '#e6a23c'],
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        title: {
+                            display: true,
+                            text: '林芝市部分能源资源潜力'
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    if (context.parsed.x !== null) {
+                                        label += context.parsed.x;
+                                        if(context.label.includes('小时')) {
+                                            label += ' 小时';
+                                        }
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: '数值'
+                            }
+                        }
+                    }
+                }
+            });
+
+            const mapNodes = document.querySelectorAll('.map-node');
+            const navLinks = document.querySelectorAll('nav a');
+            const contentSections = document.querySelectorAll('.content-card');
+
+            const activateNode = (targetId) => {
+                 mapNodes.forEach(node => {
+                    if (node.dataset.target === targetId) {
+                        node.style.backgroundColor = '#c86a2d';
+                        node.style.transform = 'scale(1.1)';
+                    } else {
+                        node.style.backgroundColor = '#d3cec4';
+                        node.style.transform = 'scale(1)';
+                    }
+                });
+            };
+            
+            mapNodes.forEach(node => {
+                node.addEventListener('click', () => {
+                    const targetId = node.dataset.target;
+                    const targetElement = document.getElementById(targetId);
+                    if (targetElement) {
+                        targetElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        activateNode(targetId);
+                    }
+                });
+            });
+
+            navLinks.forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const targetId = link.getAttribute('href').substring(1);
+                    const targetElement = document.getElementById(targetId);
+                    if (targetElement) {
+                        window.scrollTo({
+                            top: targetElement.offsetTop - 80,
+                            behavior: 'smooth'
+                        });
+                    }
+                });
+            });
+
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                        const targetId = entry.target.id;
+                        activateNode(targetId);
+                        
+                        document.querySelectorAll('.nav-item').forEach(nav => {
+                            nav.classList.remove('active');
+                            if (nav.getAttribute('href') === `#${targetId}`) {
+                                nav.classList.add('active');
+                            }
+                        });
+                    }
+                });
+            }, { threshold: 0.2, rootMargin: "-80px 0px -80px 0px" });
+
+            contentSections.forEach(section => {
+                observer.observe(section);
+            });
+            
+            // Initial activation for the first visible section on load
+            setTimeout(() => {
+                for(const section of contentSections) {
+                    const rect = section.getBoundingClientRect();
+                    if(rect.top >= 0 && rect.bottom <= window.innerHeight) {
+                        activateNode(section.id);
+                        break;
+                    }
+                }
+            }, 200);
+        });
+    </script>
+</body>
+</html>
